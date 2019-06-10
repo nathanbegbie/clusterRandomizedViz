@@ -33,15 +33,13 @@ const getRowLength = (x) => {
 }
 
 const placeOnGrid = (obj) => {
-    var rowLength = getRowLength(numberInCluster);
-
     obj.attr("cx", (thing) => {
-        thing.x = ((thing.order % rowLength) * spaceBetween)
+        thing.x = ((thing.order % getRowLength(clusterSizes[thing.cluster])) * spaceBetween)
           + circleRadius
           + (thing.cluster * spaceBetweenClusters);
         return thing.x;
     }).attr("cy", (thing) => {
-        thing.y = (Math.floor(thing.order / rowLength) * spaceBetween) + circleRadius;
+        thing.y = (Math.floor(thing.order / getRowLength(clusterSizes[thing.cluster])) * spaceBetween) + circleRadius;
         return thing.y
     });
 }
