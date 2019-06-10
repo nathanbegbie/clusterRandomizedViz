@@ -22,15 +22,15 @@ var svg = d3.select("body").append("svg")
 //     .attr("x", 20)
 //     .attr("y", 20);
 
-const getCanvasMidpoint = () => w/2
+const getCanvasMidpoint = () => w/2;
 
-const getNearestUpperSquare = (x) => {
-    return Math.pow(Math.ceil(Math.sqrt(x)), 2)
-}
+const getNearestUpperSquare = (x) => (
+    Math.pow(Math.ceil(Math.sqrt(x)), 2)
+)
 
-const getRowLength = (x) => {
-    return Math.sqrt(getNearestUpperSquare(x))
-}
+const getRowLength = (x) => (
+    Math.sqrt(getNearestUpperSquare(x))
+)
 
 const placeOnGrid = (obj) => {
     obj.attr("cx", (thing) => {
