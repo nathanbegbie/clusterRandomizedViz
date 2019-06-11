@@ -18,10 +18,6 @@ var svg = d3.select("body").append("svg")
     .attr("width", w)
     .attr("height", h);
 
-// var text = svg.append("text")
-//     .attr("x", 20)
-//     .attr("y", 20);
-
 const getCanvasMidpoint = () => w/2;
 
 const getNearestUpperSquare = (x) => (
@@ -54,7 +50,7 @@ const getRandomIntFromInterval = (min, max) => (Math.floor(Math.random() * (max 
 // randomly assign clusters to treatments
 // index is group id
 // value at index is the cluster allocated to that group
-const clusterAllocations = Array(numberOfClusters).fill(0).map( (obj, i) => getRandomInt(numberOfTreatments));
+const clusterAllocations = Array(numberOfClusters).fill(0).map( () => getRandomInt(numberOfTreatments));
 
 // randomly assign ___ to ___
 const clusterSizes = d3.range(numberOfClusters)
@@ -81,7 +77,7 @@ const placeByTreatment = (className, xStart, yStart) => {
         size = treatmentGroup.size();
         rowLength = getRowLength(size);
 
-    treatmentGroup.each(function(item, index){
+    treatmentGroup.each(function(_item, index){
         d3.select(this)
             // .style("fill", "black")
             .transition()
@@ -136,10 +132,7 @@ const reset = () => {
 };
 
 const assignByCluster = () => {
-    /**
-     * This comment
-     */
-    new_allocations = Array(numberOfClusters).fill(0).map((obj, i) => getRandomInt(numberOfTreatments));
+    new_allocations = Array(numberOfClusters).fill(0).map(() => getRandomInt(numberOfTreatments));
 
     // remove all cluster classes
     d3.range(numberOfTreatments).map((_obj, index) => {
