@@ -3,16 +3,16 @@
 // # get better placing of clusters
 // # put labels on clusters
 
-var w = 960,
-  h = 500;
-circleRadius = 4;
-spaceBetweenClusters = 150;
-numberOfClusters = 6;
-numberInCluster = 50;
-numberOfTreatments = 2;
-spaceBetween = 10;
-clusterSizeLowerLimit = 20;
-clusterSizeUpperLimit = 100;
+const w = 960,
+  h = 500,
+  circleRadius = 4,
+  spaceBetweenClusters = 150,
+  numberOfClusters = 6,
+  numberInCluster = 50,
+  numberOfTreatments = 2,
+  spaceBetweenCircleEdges = 2,
+  clusterSizeLowerLimit = 20,
+  clusterSizeUpperLimit = 100;
 
 var svg = d3
   .select("body")
@@ -26,12 +26,16 @@ const getNearestUpperSquare = x => Math.pow(Math.ceil(Math.sqrt(x)), 2);
 
 const getRowLength = x => Math.sqrt(getNearestUpperSquare(x));
 
+const getDistanceBetweenCircleCentres = () =>
+  2 * circleRadius + spaceBetweenCircleEdges;
+
 const placeOnGrid = obj => {
+  var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
   obj
     .attr("cx", thing => {
       thing.x =
         (thing.order % getRowLength(clusterSizes[thing.cluster])) *
-          spaceBetween +
+          spaceBetweenCircleCenters +
         circleRadius +
         thing.cluster * spaceBetweenClusters;
       return thing.x;
@@ -39,7 +43,7 @@ const placeOnGrid = obj => {
     .attr("cy", thing => {
       thing.y =
         Math.floor(thing.order / getRowLength(clusterSizes[thing.cluster])) *
-          spaceBetween +
+          spaceBetweenCircleCenters +
         circleRadius;
       return thing.y;
     });
@@ -82,7 +86,7 @@ const placeByTreatment = (className, xStart, yStart) => {
   var treatmentGroup = d3.selectAll(className);
   size = treatmentGroup.size();
   rowLength = getRowLength(size);
-
+  spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
   // place text on the page
 
   treatmentGroup.each(function(_item, index) {
@@ -91,12 +95,17 @@ const placeByTreatment = (className, xStart, yStart) => {
       .transition()
       .duration(1500)
       .attr("cx", thing => {
-        thing.x = xStart + (index % rowLength) * spaceBetween + circleRadius;
+        thing.x =
+          xStart +
+          (index % rowLength) * spaceBetweenCircleCenters +
+          circleRadius;
         return thing.x;
       })
       .attr("cy", thing => {
         thing.y =
-          yStart + Math.floor(index / rowLength) * spaceBetween + circleRadius;
+          yStart +
+          Math.floor(index / rowLength) * spaceBetweenCircleCenters +
+          circleRadius;
         return thing.y;
       });
   });
@@ -125,20 +134,22 @@ const randomlyAssign = () => {
 
 const placeOnGridTransition = obj => {
   var rowLength = getRowLength(numberInCluster);
+  var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
 
   obj
     .transition()
     .duration(1500)
     .attr("cx", thing => {
       thing.x =
-        (thing.order % rowLength) * spaceBetween +
+        (thing.order % rowLength) * spaceBetweenCircleCenters +
         circleRadius +
         thing.cluster * spaceBetweenClusters;
       return thing.x;
     })
     .attr("cy", thing => {
       thing.y =
-        Math.floor(thing.order / rowLength) * spaceBetween + circleRadius;
+        Math.floor(thing.order / rowLength) * spaceBetweenCircleCenters +
+        circleRadius;
       return thing.y;
     });
 };
@@ -157,6 +168,7 @@ const assignByCluster = () => {
     d3.selectAll("circle").classed("cluster_treatment_" + index, false);
   });
 
+  // assign new cluster classes
   d3.selectAll("circle").attr(
     "class",
     d =>
@@ -167,15 +179,15 @@ const assignByCluster = () => {
       d.treatment
   );
 
-  d3.range(numberOfTreatments).map((_obj, index) => {
+  // get width of blocks
+  clusterSizes = d3.range(numberOfTreatments).map((_obj, index) => {
     placeByTreatment(".cluster_treatment_" + index, 100 + index * 200, 200);
   });
 };
 
-const getBlockWidth = numberOfItems => {
-  var rowLength = getRowLength(numberOfItems);
-  return rowLength * circleRadius + spaceBetween * (rowLength - 1);
-};
+const getBlockWidth = numberOfItems =>
+  getRowLength(numberOfItems) * (circleRadius * 2) +
+  spaceBetweenCircleEdges * (getRowLength(numberOfItems) - 1);
 
 // EXECUTION
 
