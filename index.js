@@ -34,26 +34,6 @@ const getRowLength = x => Math.sqrt(getNearestUpperSquare(x));
 const getDistanceBetweenCircleCentres = () =>
   2 * circleRadius + spaceBetweenCircleEdges;
 
-const placeOnGrid = obj => {
-  var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
-  obj
-    .attr("cx", thing => {
-      thing.x =
-        (thing.order % getRowLength(clusterSizes[thing.cluster])) *
-          spaceBetweenCircleCenters +
-        circleRadius +
-        thing.cluster * spaceBetweenClusters;
-      return thing.x;
-    })
-    .attr("cy", thing => {
-      thing.y =
-        Math.floor(thing.order / getRowLength(clusterSizes[thing.cluster])) *
-          spaceBetweenCircleCenters +
-        circleRadius;
-      return thing.y;
-    });
-};
-
 const getRandomInt = max => Math.floor(Math.random() * Math.floor(max));
 
 const getRandomIntFromInterval = (min, max) =>
@@ -143,13 +123,14 @@ const randomlyAssign = () => {
   });
 };
 
-const placeOnGridTransition = obj => {
+// this function places the circles in their original grid
+const placeOnGrid = (obj, shouldTransition = true) => {
   var rowLength = getRowLength(numberInCluster);
   var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
 
   obj
     .transition()
-    .duration(1500)
+    .duration(shouldTransition ? 1500 : 0)
     .attr("cx", thing => {
       thing.x =
         (thing.order % rowLength) * spaceBetweenCircleCenters +
@@ -166,7 +147,7 @@ const placeOnGridTransition = obj => {
 };
 
 const reset = () => {
-  placeOnGridTransition(circles);
+  placeOnGrid(circles);
 };
 
 const assignByCluster = () => {
@@ -225,7 +206,7 @@ circles = svg
       d.treatment
   );
 
-placeOnGrid(circles);
+placeOnGrid(circles, (shouldTransition = false));
 
 // TODO: avoid globals
 // how do we determine power for CRCT?
