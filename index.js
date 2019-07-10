@@ -3,6 +3,11 @@
 // # get better placing of clusters
 // # put labels on clusters
 
+// Constants
+// where N is an integer
+// cluster_treatment_N
+// treatment_N
+
 const w = 960,
   h = 500,
   circleRadius = 4,
@@ -62,25 +67,31 @@ const clusterAllocations = Array(numberOfClusters)
   .map(() => getRandomInt(numberOfTreatments));
 
 // randomly assign ___ to ___
-const clusterSizes = d3
-  .range(numberOfClusters)
-  .map(() =>
-    getRandomIntFromInterval(clusterSizeLowerLimit, clusterSizeUpperLimit)
-  );
+const getClusterSizes = (
+  _numberOfClusters,
+  _clusterSizeLowerLimit,
+  _clusterSizeUpperLimit
+) =>
+  d3
+    .range(_numberOfClusters)
+    .map(() =>
+      getRandomIntFromInterval(_clusterSizeLowerLimit, _clusterSizeUpperLimit)
+    );
 
-const clusterData = clusterSizes
-  .map((clusterSize, outerIndex) =>
-    d3.range(clusterSize).map((_obj2, innerIndex) => ({
-      cluster: outerIndex,
-      order: innerIndex,
-      treatment: getRandomInt(numberOfTreatments),
-      x: 0,
-      y: 0,
-      dx: Math.random() - 0.5,
-      dy: Math.random() - 0.5
-    }))
-  )
-  .flat();
+const createClusterData = clusterSizes =>
+  clusterSizes
+    .map((clusterSize, outerIndex) =>
+      d3.range(clusterSize).map((_obj2, innerIndex) => ({
+        cluster: outerIndex,
+        order: innerIndex,
+        treatment: getRandomInt(numberOfTreatments),
+        x: 0,
+        y: 0,
+        dx: Math.random() - 0.5,
+        dy: Math.random() - 0.5
+      }))
+    )
+    .flat();
 
 const placeByTreatment = (className, xStart, yStart) => {
   var treatmentGroup = d3.selectAll(className);
@@ -190,6 +201,12 @@ const getBlockWidth = numberOfItems =>
   spaceBetweenCircleEdges * (getRowLength(numberOfItems) - 1);
 
 // EXECUTION
+const clusterSizes = getClusterSizes(
+  numberOfClusters,
+  numberOfClusters,
+  clusterSizeUpperLimit
+);
+const clusterData = createClusterData(clusterSizes);
 
 circles = svg
   .selectAll("circle")
@@ -209,3 +226,6 @@ circles = svg
   );
 
 placeOnGrid(circles);
+
+// TODO: avoid globals
+// how do we determine power for CRCT?
