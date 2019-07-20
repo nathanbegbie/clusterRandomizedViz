@@ -2,6 +2,8 @@
 // ✅ make cluster size variable
 // # get better placing of clusters
 // # put labels on clusters
+// avoid globals
+// how do we determine power for CRCT?
 
 // Constants
 // where N is an integer
@@ -17,13 +19,10 @@ const w = 960,
   numberOfTreatments = 2,
   spaceBetweenCircleEdges = 2,
   clusterSizeLowerLimit = 20,
-  clusterSizeUpperLimit = 100;
-
-var svg = d3
-  .select("body")
-  .append("svg")
-  .attr("width", w)
-  .attr("height", h);
+  clusterSizeUpperLimit = 100,
+  clusterClassPrefix = "cluster_",
+  clusterTreatmentClassPrefix = "cluster_treatment_",
+  treatmentClassPrefix = "treatment_";
 
 const getCanvasMidpoint = () => w / 2;
 
@@ -73,18 +72,43 @@ const createClusterData = clusterSizes =>
     )
     .flat();
 
-const placeByTreatment = (className, xStart, yStart) => {
-  var treatmentGroup = d3.selectAll(className);
-  size = treatmentGroup.size();
-  rowLength = getRowLength(size);
-  spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
-  // place text on the page
+const randomlyAssign = () => {
+  // remove all treatment classes
+  d3.range(numberOfTreatments).map((_obj, index) => {
+    d3.selectAll("circle").classed(treatmentClassPrefix + index, false);
+  });
 
-  treatmentGroup.each(function(_item, index) {
+  d3.selectAll("circle").attr(
+    "class",
+    d =>
+      clusterTreatmentClassPrefix +
+      clusterAllocations[d.cluster] +
+      " " +
+      treatmentClassPrefix +
+      getRandomInt(numberOfTreatments) +
+      " " +
+      clusterClassPrefix +
+      d.cluster
+  );
+
+  d3.range(numberOfTreatments).map((_obj, index) => {
+    placeCluster(
+      d3.selectAll("." + treatmentClassPrefix + index),
+      (shouldTransition = true),
+      (xStart = 100 + index * 200),
+      (yStart = 200)
+    );
+  });
+};
+
+const placeCluster = (obj, shouldTransition = true, xStart = 0, yStart = 0) => {
+  var rowLength = getRowLength(obj.size());
+  var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
+
+  obj.each(function(_item, index) {
     d3.select(this)
-      // .style("fill", "black")
       .transition()
-      .duration(1500)
+      .duration(shouldTransition ? 1500 : 0)
       .attr("cx", thing => {
         thing.x =
           xStart +
@@ -102,52 +126,17 @@ const placeByTreatment = (className, xStart, yStart) => {
   });
 };
 
-const randomlyAssign = () => {
-  // remove all treatment classes
-  d3.range(numberOfTreatments).map((_obj, index) => {
-    d3.selectAll("circle").classed("treatment_" + index, false);
+const reset = (shouldTransition = true) => {
+  d3.range(numberOfClusters).map((_obj, index) => {
+    // console.log(clusterClassPrefix + index)
+    var cluster = d3.selectAll("." + clusterClassPrefix + index);
+    placeCluster(
+      cluster,
+      (shouldTransition = shouldTransition),
+      (xStart = index * 150),
+      (yStart = 10)
+    );
   });
-
-  d3.selectAll("circle").attr(
-    "class",
-    d =>
-      "cluster_treatment_" +
-      clusterAllocations[d.cluster] +
-      " " +
-      "treatment_" +
-      getRandomInt(numberOfTreatments)
-  );
-
-  d3.range(numberOfTreatments).map((_obj, index) => {
-    placeByTreatment(".treatment_" + index, 100 + index * 200, 200);
-  });
-};
-
-// this function places the circles in their original grid
-const placeOnGrid = (obj, shouldTransition = true) => {
-  var rowLength = getRowLength(numberInCluster);
-  var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
-
-  obj
-    .transition()
-    .duration(shouldTransition ? 1500 : 0)
-    .attr("cx", thing => {
-      thing.x =
-        (thing.order % rowLength) * spaceBetweenCircleCenters +
-        circleRadius +
-        thing.cluster * spaceBetweenClusters;
-      return thing.x;
-    })
-    .attr("cy", thing => {
-      thing.y =
-        Math.floor(thing.order / rowLength) * spaceBetweenCircleCenters +
-        circleRadius;
-      return thing.y;
-    });
-};
-
-const reset = () => {
-  placeOnGrid(circles);
 };
 
 const assignByCluster = () => {
@@ -157,23 +146,31 @@ const assignByCluster = () => {
 
   // remove all cluster classes
   d3.range(numberOfTreatments).map((_obj, index) => {
-    d3.selectAll("circle").classed("cluster_treatment_" + index, false);
+    d3.selectAll("circle").classed(clusterTreatmentClassPrefix + index, false);
   });
 
   // assign new cluster classes
   d3.selectAll("circle").attr(
     "class",
     d =>
-      "cluster_treatment_" +
+      clusterTreatmentClassPrefix +
       new_allocations[d.cluster] +
       " " +
-      "treatment_" +
-      d.treatment
+      treatmentClassPrefix +
+      d.treatment +
+      " " +
+      clusterClassPrefix +
+      d.cluster
   );
 
   // get width of blocks
-  clusterSizes = d3.range(numberOfTreatments).map((_obj, index) => {
-    placeByTreatment(".cluster_treatment_" + index, 100 + index * 200, 200);
+  d3.range(numberOfTreatments).map((_obj, index) => {
+    placeCluster(
+      d3.selectAll("." + clusterTreatmentClassPrefix + index),
+      (shouldTransition = true),
+      (xStart = 100 + index * 200),
+      (yStart = 200)
+    );
   });
 };
 
@@ -189,6 +186,12 @@ const clusterSizes = getClusterSizes(
 );
 const clusterData = createClusterData(clusterSizes);
 
+var svg = d3
+  .select("body")
+  .append("svg")
+  .attr("width", w)
+  .attr("height", h);
+
 circles = svg
   .selectAll("circle")
   .data(clusterData)
@@ -202,11 +205,11 @@ circles = svg
       "cluster_treatment_" +
       clusterAllocations[d.cluster] +
       " " +
-      "treatment_" +
-      d.treatment
+      treatmentClassPrefix +
+      d.treatment +
+      " " +
+      clusterClassPrefix +
+      d.cluster
   );
 
-placeOnGrid(circles, (shouldTransition = false));
-
-// TODO: avoid globals
-// how do we determine power for CRCT?
+reset((shouldTransition = false));
