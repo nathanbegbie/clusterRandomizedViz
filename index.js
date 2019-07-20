@@ -10,11 +10,11 @@
 // cluster_treatment_N
 // treatment_N
 
-const w = 960,
+const w = 1200,
   h = 500,
   circleRadius = 4,
   spaceBetweenClusters = 150,
-  numberOfClusters = 6,
+  numberOfClusters = 8,
   numberInCluster = 50,
   numberOfTreatments = 2,
   spaceBetweenCircleEdges = 2,
@@ -91,19 +91,41 @@ const randomlyAssign = () => {
       d.cluster
   );
 
+  d3.selectAll(".counter").remove();
+
   d3.range(numberOfTreatments).map((_obj, index) => {
     placeCluster(
       d3.selectAll("." + treatmentClassPrefix + index),
       (shouldTransition = true),
       (xStart = 100 + index * 200),
-      (yStart = 200)
+      (yStart = 200),
+      (text = "treatment")
     );
   });
 };
 
-const placeCluster = (obj, shouldTransition = true, xStart = 0, yStart = 0) => {
-  var rowLength = getRowLength(obj.size());
-  var spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
+const placeCluster = (
+  obj,
+  shouldTransition = true,
+  xStart = 0,
+  yStart = 0,
+  text = false
+) => {
+  var clusterSize = obj.size(),
+    rowLength = getRowLength(clusterSize),
+    spaceBetweenCircleCenters = getDistanceBetweenCircleCentres();
+
+  var textHeight = text ? 20 : 0;
+
+  if (text) {
+    svg
+      .append("text")
+      .attr("class", "counter")
+      .attr("x", xStart)
+      .attr("y", yStart)
+      .style("font-size", "15px")
+      .text(text + ": " + clusterSize);
+  }
 
   obj.each(function(_item, index) {
     d3.select(this)
@@ -118,6 +140,7 @@ const placeCluster = (obj, shouldTransition = true, xStart = 0, yStart = 0) => {
       })
       .attr("cy", thing => {
         thing.y =
+          textHeight +
           yStart +
           Math.floor(index / rowLength) * spaceBetweenCircleCenters +
           circleRadius;
@@ -127,14 +150,18 @@ const placeCluster = (obj, shouldTransition = true, xStart = 0, yStart = 0) => {
 };
 
 const reset = (shouldTransition = true) => {
+  d3.selectAll(".counter").remove();
+
   d3.range(numberOfClusters).map((_obj, index) => {
     // console.log(clusterClassPrefix + index)
     var cluster = d3.selectAll("." + clusterClassPrefix + index);
+
     placeCluster(
       cluster,
       (shouldTransition = shouldTransition),
       (xStart = index * 150),
-      (yStart = 10)
+      (yStart = 10),
+      (text = "Cluster")
     );
   });
 };
@@ -163,13 +190,16 @@ const assignByCluster = () => {
       d.cluster
   );
 
+  d3.selectAll(".counter").remove();
+
   // get width of blocks
   d3.range(numberOfTreatments).map((_obj, index) => {
     placeCluster(
       d3.selectAll("." + clusterTreatmentClassPrefix + index),
       (shouldTransition = true),
       (xStart = 100 + index * 200),
-      (yStart = 200)
+      (yStart = 200),
+      (text = "treatment")
     );
   });
 };
@@ -212,4 +242,42 @@ circles = svg
       d.cluster
   );
 
-reset((shouldTransition = false));
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const say = text => {
+  svg
+    .append("text")
+    .attr("class", "header")
+    .attr("x", 50)
+    .attr("y", 100)
+    .style("font-size", "30px")
+    .text(text);
+};
+
+async function demo() {
+  reset((shouldTransition = false));
+  await sleep(2000);
+
+  // Sleep in loop
+  for (let i = 0; i < 3; i++) {
+    say("Random Allocation - Iteration " + (i + 1));
+    randomlyAssign();
+    await sleep(2000);
+    d3.select(".header").remove();
+  }
+
+  reset();
+  await sleep(2000);
+
+  for (let i = 0; i < 3; i++) {
+    say("Cluster Random Allocation - Iteration " + (i + 1));
+    assignByCluster();
+    await sleep(2000);
+    d3.select(".header").remove();
+  }
+
+  reset();
+}
+
+demo();
+demo();
